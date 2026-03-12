@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exoplanet Pipeline Architecture — Dave Ruckel</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;600;800&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #05050f;
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    padding: 48px 24px 64px;
+    overflow-x: hidden;
+  }
+
+  /* Starfield */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 30% 60%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 50% 10%, rgba(255,255,255,0.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 70% 80%, rgba(255,255,255,0.2) 0%, transparent 100%),
+      radial-gradient(1px 1px at 85% 35%, rgba(255,255,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 20% 85%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 60% 50%, rgba(255,255,255,0.2) 0%, transparent 100%),
+      radial-gradient(1px 1px at 92% 15%, rgba(255,255,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 45% 90%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 78% 55%, rgba(255,255,255,0.2) 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 640px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 48px;
+    opacity: 0;
+    animation: fadeDown 0.8s ease forwards;
+  }
+
+  .eyebrow {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: #7B2FBE;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .title {
+    font-size: clamp(22px, 5vw, 40px);
+    font-weight: 800;
+    background: linear-gradient(135deg, #ffffff 0%, #a78bfa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.2;
+    margin-bottom: 8px;
+  }
+
+  .subtitle {
+    color: #4a4a6a;
+    font-size: 13px;
+  }
+
+  /* Tech badges */
+  .badges {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 48px;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.2s forwards;
+  }
+
+  .badge {
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* Pipeline */
+  .pipeline {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  .node {
+    width: 100%;
+    border-radius: 10px;
+    padding: 14px 20px;
+    cursor: default;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+    opacity: 0;
+    animation: fadeUp 0.6s ease forwards;
+    border: 1px solid transparent;
+  }
+
+  .node:hover {
+    transform: scale(1.03);
+    border-color: rgba(255,255,255,0.2) !important;
+  }
+
+  .node-inner {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .node-icon {
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+
+  .node-label {
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.3px;
+  }
+
+  .node-sublabel {
+    font-size: 11px;
+    margin-top: 3px;
+    font-family: 'Space Mono', monospace;
+    opacity: 0.6;
+  }
+
+  /* Arrow */
+  .arrow {
+    color: #2a2a4a;
+    font-size: 20px;
+    line-height: 32px;
+    user-select: none;
+    transition: color 0.3s;
+  }
+
+  /* dbt box */
+  .dbt-box {
+    width: 100%;
+    border: 1px dashed #FF694A66;
+    border-radius: 12px;
+    padding: 20px 16px 16px;
+    position: relative;
+    opacity: 0;
+    animation: fadeUp 0.6s ease forwards;
+  }
+
+  .dbt-label {
+    position: absolute;
+    top: -11px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #FF694A;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 800;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 2px;
+    padding: 3px 14px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .dbt-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .dbt-arrow {
+    text-align: center;
+    color: #FF694A66;
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  .node-compact {
+    padding: 10px 16px;
+  }
+
+  .node-compact .node-icon { font-size: 16px; }
+  .node-compact .node-label { font-size: 12px; }
+  .node-compact .node-sublabel { font-size: 10px; }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    margin-top: 48px;
+    color: #2a2a4a;
+    font-size: 12px;
+    font-family: 'Space Mono', monospace;
+    opacity: 0;
+    animation: fadeUp 0.6s ease 1.4s forwards;
+  }
+
+  .footer a {
+    color: #7B2FBE;
+    text-decoration: none;
+  }
+
+  .footer a:hover { text-decoration: underline; }
+
+  /* Animations */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="eyebrow">Portfolio Project · Data Engineering</div>
+    <div class="title">🪐 Exoplanet Discovery Pipeline</div>
+    <div class="subtitle">End-to-end data engineering architecture</div>
+  </div>
+
+  <div class="badges">
+    <span class="badge" style="background:#3776AB;color:#fff">Python</span>
+    <span class="badge" style="background:#FF694A;color:#fff">dbt Core</span>
+    <span class="badge" style="background:#FFD700;color:#000">DuckDB</span>
+    <span class="badge" style="background:#3F4F75;color:#fff">Plotly</span>
+    <span class="badge" style="background:#FF4B4B;color:#fff">Streamlit</span>
+    <span class="badge" style="background:#0B3D91;color:#fff">NASA API</span>
+    <span class="badge" style="background:#333;color:#fff">GitHub</span>
+  </div>
+
+  <div class="pipeline">
+
+    <!-- NASA -->
+    <div class="node" style="background:#0B3D9133;border-color:#0B3D9166;animation-delay:0.3s"
+         onmouseover="this.style.boxShadow='0 0 24px #0B3D9166'" onmouseout="this.style.boxShadow='none'">
+      <div class="node-inner">
+        <div class="node-icon">🛰️</div>
+        <div>
+          <div class="node-label" style="color:#60a5fa">NASA Exoplanet Archive</div>
+          <div class="node-sublabel">TAP API · 6,100+ confirmed planets · No key required</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow">↓</div>
+
+    <!-- Python -->
+    <div class="node" style="background:#1a1a2e;border-color:#2a2a4e;animation-delay:0.45s"
+         onmouseover="this.style.boxShadow='0 0 24px #3776AB66'" onmouseout="this.style.boxShadow='none'">
+      <div class="node-inner">
+        <div class="node-icon">🐍</div>
+        <div>
+          <div class="node-label" style="color:#fff">Python Ingest Script</div>
+          <div class="node-sublabel">requests · pandas · scripts/ingest_exoplanets.py</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow">↓</div>
+
+    <!-- Raw CSV -->
+    <div class="node" style="background:#111122;border-color:#222244;animation-delay:0.6s"
+         onmouseover="this.style.boxShadow='0 0 24px #ffffff22'" onmouseout="this.style.boxShadow='none'">
+      <div class="node-inner">
+        <div class="node-icon">📄</div>
+        <div>
+          <div class="node-label" style="color:#adb5bd">Raw CSV</div>
+          <div class="node-sublabel">data/exoplanets_raw.csv · local only · gitignored</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow">↓</div>
+
+    <!-- dbt box -->
+    <div class="dbt-box" style="animation-delay:0.75s">
+      <div class="dbt-label">dbt Core Transformations</div>
+      <div class="dbt-inner">
+
+        <div class="node node-compact" style="background:#FF694A22;border-color:#FF694A44;opacity:1;animation:none"
+             onmouseover="this.style.boxShadow='0 0 16px #FF694A44'" onmouseout="this.style.boxShadow='none'">
+          <div class="node-inner">
+            <div class="node-icon">⚙️</div>
+            <div>
+              <div class="node-label" style="color:#FF694A">stg_exoplanets</div>
+              <div class="node-sublabel">Clean · rename columns · filter null discovery years</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dbt-arrow">↓</div>
+
+        <div class="node node-compact" style="background:#FF694A22;border-color:#FF694A44;opacity:1;animation:none"
+             onmouseover="this.style.boxShadow='0 0 16px #FF694A44'" onmouseout="this.style.boxShadow='none'">
+          <div class="node-inner">
+            <div class="node-icon">🔬</div>
+            <div>
+              <div class="node-label" style="color:#FF694A">int_exoplanets_classified</div>
+              <div class="node-sublabel">Add planet_type · habitable_zone flag</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dbt-arrow">↓</div>
+
+        <div class="node node-compact" style="background:#FF694A22;border-color:#FF694A44;opacity:1;animation:none"
+             onmouseover="this.style.boxShadow='0 0 16px #FF694A44'" onmouseout="this.style.boxShadow='none'">
+          <div class="node-inner">
+            <div class="node-icon">📊</div>
+            <div>
+              <div class="node-label" style="color:#FF694A">mart_exoplanet_summary</div>
+              <div class="node-sublabel">Aggregate by year · method · type · facility</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="arrow">↓</div>
+
+    <!-- DuckDB -->
+    <div class="node" style="background:#1a1a0a;border-color:#FFD70033;animation-delay:0.9s"
+         onmouseover="this.style.boxShadow='0 0 24px #FFD70044'" onmouseout="this.style.boxShadow='none'">
+      <div class="node-inner">
+        <div class="node-icon">🦆</div>
+        <div>
+          <div class="node-label" style="color:#FFD700">DuckDB</div>
+          <div class="node-sublabel">In-memory analytical engine · zero config · serverless</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow">↓</div>
+
+    <!-- Streamlit -->
+    <div class="node" style="background:#FF4B4B22;border-color:#FF4B4B44;animation-delay:1.05s"
+         onmouseover="this.style.boxShadow='0 0 24px #FF4B4B44'" onmouseout="this.style.boxShadow='none'">
+      <div class="node-inner">
+        <div class="node-icon">⚡</div>
+        <div>
+          <div class="node-label" style="color:#FF4B4B">Streamlit App</div>
+          <div class="node-sublabel">app.py · Plotly charts · sidebar filters · KPI metrics</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow">↓</div>
+
+    <!-- Cloud -->
+    <div class="node" style="background:#7B2FBE22;border-color:#7B2FBE66;animation-delay:1.2s"
+         onmouseover="this.style.boxShadow='0 0 24px #7B2FBE66'" onmouseout="this.style.boxShadow='none'">
+      <div class="node-inner">
+        <div class="node-icon">🌐</div>
+        <div>
+          <div class="node-label" style="color:#a78bfa">Streamlit Cloud</div>
+          <div class="node-sublabel">daveruckel-exoplanets.streamlit.app · free public hosting</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    Dave Ruckel ·
+    <a href="https://daveruckel.weebly.com">daveruckel.weebly.com</a> ·
+    <a href="https://github.com/daveruckel/exoplanet-pipeline">github.com/daveruckel/exoplanet-pipeline</a>
+  </div>
+
+</div>
+</body>
+</html>
