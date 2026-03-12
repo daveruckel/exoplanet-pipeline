@@ -1,0 +1,8 @@
+.venv/
+data/
+__pycache__/
+*.pyc
+exoplanet_dbt/target/
+exoplanet_dbt/logs/
+exoplanet_dbt/dev.duckdb
+exoplanet_dbt/dev.duckdb.wal

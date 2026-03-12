@@ -1,0 +1,31 @@
+[0m22:24:56.255301 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x109b41690>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x109b688d0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x106dd7450>]}
+
+
+============================== 22:24:56.258582 | e629e882-97c3-437c-97d6-fe0ad3639dcc ==============================
+[0m22:24:56.258582 [info ] [MainThread]: Running with dbt=1.11.7
+[0m22:24:56.258936 [debug] [MainThread]: running dbt with arguments {'no_print': 'None', 'printer_width': '80', 'debug': 'False', 'target_path': 'None', 'send_anonymous_usage_stats': 'True', 'static_parser': 'True', 'write_json': 'True', 'version_check': 'True', 'use_colors': 'True', 'use_experimental_parser': 'False', 'empty': 'None', 'introspect': 'True', 'warn_error_options': 'WarnErrorOptionsV2(error=[], warn=[], silence=[])', 'quiet': 'False', 'log_path': 'logs', 'fail_fast': 'False', 'invocation_command': 'dbt init exoplanet_dbt', 'warn_error': 'None', 'partial_parse': 'True', 'cache_selected_only': 'False', 'profiles_dir': '/Users/daveruckel/.dbt', 'indirect_selection': 'eager', 'log_format': 'default', 'log_cache_events': 'False'}
+[0m22:24:56.269051 [info ] [MainThread]: Creating dbt configuration folder at /Users/daveruckel/.dbt
+[0m22:24:56.270078 [debug] [MainThread]: Starter project path: /Users/daveruckel/exoplanet-pipeline/.venv/lib/python3.11/site-packages/dbt/include/starter_project
+[0m22:24:56.273793 [info ] [MainThread]: 
+Your new dbt project "exoplanet_dbt" was created!
+
+For more information on how to configure the profiles.yml file,
+please consult the dbt documentation here:
+
+  https://docs.getdbt.com/docs/configure-your-profile
+
+One more thing:
+
+Need help? Don't hesitate to reach out to us via GitHub issues or on Slack:
+
+  https://community.getdbt.com/
+
+Happy modeling!
+
+[0m22:24:56.273984 [info ] [MainThread]: Setting up your profile.
+[0m22:26:00.545826 [info ] [MainThread]: Profile exoplanet_dbt written to /Users/daveruckel/.dbt/profiles.yml using target's sample configuration. Once updated, you'll be able to start developing with dbt.
+[0m22:26:00.715869 [debug] [MainThread]: Resource report: {"command_name": "init", "command_success": true, "command_wall_clock_time": 64.52698, "process_in_blocks": "0", "process_kernel_time": 0.22486, "process_mem_max_rss": "112017408", "process_out_blocks": "0", "process_user_time": 0.942807}
+[0m22:26:00.717247 [debug] [MainThread]: Command `dbt init` succeeded at 22:26:00.716806 after 64.53 seconds
+[0m22:26:00.718533 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x109b69150>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x109b68b50>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x100922810>]}
+[0m22:26:00.719374 [debug] [MainThread]: Flushing usage events
+[0m22:26:01.116544 [debug] [MainThread]: An error was encountered while trying to flush usage events
